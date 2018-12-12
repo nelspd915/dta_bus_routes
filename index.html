@@ -25,9 +25,11 @@
     require([
       "esri/Map",
       "esri/views/SceneView",
-      "esri/layers/Layer"
+      "esri/layers/FeatureLayer",
+      "esri/layers/support/Field",
+      "esri/tasks/support/Query"
     ], function(
-      Map, SceneView, Layer
+      Map, SceneView, FeatureLayer, Field, Query
     ) {
 
       var map = new Map({
@@ -41,26 +43,48 @@
         center: [-92.1, 46.795]
       });
 
-      /************************************************
-       *
-       * Create a layer from an existing Portal item hosted
-       * in ArcGIS Online using the ID of the item.
-       *
-       *************************************************/
-      Layer.fromPortalItem({
-          portalItem: { // autocasts as new PortalItem()
-            id: "b4f36abb8c7d4887bae4e207d763ad40"
-          }
-        }).then(addLayer)
-        .catch(rejection);
-
-      // Adds the layer to the map once it loads
-      function addLayer(layer) {
-        map.add(layer);
+      // Create array for route layers
+      routes = [];
+        
+      const fields = [
+         new Field({
+           name: "OBJECTID",
+           alias: "ObjectID",
+           type: "oid"
+         }), new Field({
+           name: "routes_csv_route_long_name",
+           alias: "route_long_name",
+           type: "string"
+         }), new Field ({
+           name: "trips_examples_route_id",
+           alias: "route_id",
+           type: "string"
+         })
+        ];
+        
+      // Add feature layers for routes
+      for (i = 1; i < 37; i++) {
+          urlString = "https://services.arcgis.com/8df8p0NlLFEShl0r/arcgis/rest/services/DTA_Bus_Routes/FeatureServer/" + String(i)
+          routes[i] = new FeatureLayer({
+              url: urlString,
+              fields: fields,
+              outFields: ["*"]
+          });
+          
+          // Create template for route popups
+          var popupTemplate = {
+              title: "DTA Bus Route",
+              content: "Route Number: {trips_examples_route_id}"
+          };
+          
+          routes[i].popupTemplate = popupTemplate;
+          
+          // Adds the layer to the map once it loads
+          map.add(routes[i]);
       }
 
       function rejection(error) {
-        console.log("Layer failed to load: ", error);
+          console.log("Layer failed to load: ", error);
       }
     });
   </script>
