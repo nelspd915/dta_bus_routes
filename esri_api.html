@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+  <title>Create a layer from a portal item - 4.9</title>
+
+  <style>
+    html,
+    body,
+    #viewDiv {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+    }
+      
+      #basemap {
+          height: 100px;
+      }
+  </style>
+
+  <link rel="stylesheet" href="https://js.arcgis.com/4.9/esri/css/main.css">
+
+  <script src="https://js.arcgis.com/4.9/"></script>
+
+  <script>
+    require([
+      "esri/Map",
+      "esri/views/SceneView",
+      "esri/layers/FeatureLayer",
+      "esri/layers/support/Field",
+      "esri/tasks/support/Query",
+      "esri/widgets/Legend",
+      "esri/layers/Layer",
+      "esri/widgets/BasemapGallery"
+    ], function(
+      Map, SceneView, FeatureLayer, Field, Query, Legend, Layer, BasemapGallery
+    ) {
+
+      // Create new map
+      var map = new Map({
+        basemap: "gray"
+      });
+
+      // Create SceneView to display map
+      var view = new SceneView({
+        map: map,
+        container: "viewDiv",
+        zoom: 13,
+        center: [-92.1, 46.795]
+      });
+        
+        
+      // Create template for transit center popups
+      var transitTemplate = {
+          title: "DTA Transit Center",
+          content: "<strong>Name:</strong> {stop_name}"
+      };
+      
+      // Add transit centers layer
+      transitCenters = new FeatureLayer({
+          url: "https://services.arcgis.com/8df8p0NlLFEShl0r/arcgis/rest/services/DTA_Bus_Routes/FeatureServer/0",
+          outFields: ["*"]
+      });
+        
+      transitCenters.popupTemplate = transitTemplate;
+        
+      // List of route IDs
+      var routeIDs = [
+          "0","1","2","2F","2X","3","3X","4","5","6","7","7A","7X","8","9M","9MT","10",
+          "10H","10E","11","11K","11M","12","13","14W","15","16","16X","17","17B",
+          "17S","18","19","20","21","22","23"
+      ]
+      
+      // Create arrays for route layers and legend info
+      routes = [];
+      legendInfo = [];
+        
+      // Add feature layers for routes
+      for (i = 1; i < 37; i++) {
+          urlString = "https://services.arcgis.com/8df8p0NlLFEShl0r/arcgis/rest/services/DTA_Bus_Routes/FeatureServer/" + String(i)
+          layerOptions = {
+              url: urlString,
+              objectIdField: "ObjectID",
+              outFields: ["*"]
+          };
+          
+          routes[i] = new FeatureLayer(urlString, layerOptions);
+          
+          // Create template for route popups
+          var popupTemplate = {
+              title: "DTA Bus Route",
+              content: "<strong>Route:</strong> " + routeIDs[i]
+          };
+          
+          routes[i].popupTemplate = popupTemplate;
+          
+          // Add layer to legend info
+          legendInfo[i-1] = {
+              layer: routes[i],
+              title: "Route: " + routeIDs[i]
+          };
+          
+          // Adds the layer to the map once it loads
+          map.add(routes[i]);
+      }
+        
+      // Create legend
+      var legend = new Legend({
+          view: view,
+          layerInfos: legendInfo
+      });
+      view.ui.add(legend, "bottom-right");
+        
+      // Add basemap widget
+      var basemapGallery = new BasemapGallery({
+          view: view
+      });
+
+      // Add the widget to the top-right corner of the view
+      view.ui.add(basemapGallery, {
+          position: "top-right",
+          iconClass: "basemap"
+      });
+
+      function rejection(error) {
+          console.log("Layer failed to load: ", error);
+      }
+    });
+  </script>
+</head>
+
+<body>
+  <div id="viewDiv"></div>
+</body>
+
+</html>

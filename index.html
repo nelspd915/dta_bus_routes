@@ -1,97 +1,75 @@
-<!DOCTYPE html>
-<html>
+<!--
+  An example displaying a hosted feature layer
+  ref: https://esri.github.io/esri-leaflet/tutorials/working-with-feature-layers.html
+ -->
+
+<!doctype html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
-  <title>Create a layer from a portal item - 4.9</title>
+  <title>Leaflet Map with a Feature Layer</title>
+  <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+
+  <!-- Load Leaflet from CDN-->
+   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.4/dist/leaflet.css"
+    integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA=="
+    crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.3.4/dist/leaflet.js"
+    integrity="sha512-nMMmRyTVoLYqjP9hrbed9S+FzjZHW5gY1TWCHA5ckwXZBadntCNs8kEqAWdrb9O7rxbCaA4lKTIWjDXZxflOcA=="
+    crossorigin=""></script>
+
+  <!-- Load Esri Leaflet from CDN -->
+  <script src="https://unpkg.com/esri-leaflet@2.2.3/dist/esri-leaflet.js"
+    integrity="sha512-YZ6b5bXRVwipfqul5krehD9qlbJzc6KOGXYsDjU9HHXW2gK57xmWl2gU6nAegiErAqFXhygKIsWPKbjLPXVb2g=="
+    crossorigin=""></script>
+
+  <!-- Load Esri Leaflet Renderers from CDN -->
+  <script src="https://unpkg.com/esri-leaflet-renderers@2.0.6/dist/esri-leaflet-renderers.js"
+    integrity="sha512-mhpdD3igvv7A/84hueuHzV0NIKFHmp2IvWnY5tIdtAHkHF36yySdstEVI11JZCmSY4TCvOkgEoW+zcV/rUfo0A=="
+    crossorigin=""></script>
 
   <style>
     html,
     body,
-    #viewDiv {
-      padding: 0;
-      margin: 0;
+    #map {
       height: 100%;
       width: 100%;
-      overflow: hidden;
+      margin: 0;
+      padding: 0;
     }
   </style>
-
-  <link rel="stylesheet" href="https://js.arcgis.com/4.9/esri/css/main.css">
-
-  <script src="https://js.arcgis.com/4.9/"></script>
-
-  <script>
-    require([
-      "esri/Map",
-      "esri/views/SceneView",
-      "esri/layers/FeatureLayer",
-      "esri/layers/support/Field",
-      "esri/tasks/support/Query"
-    ], function(
-      Map, SceneView, FeatureLayer, Field, Query
-    ) {
-
-      var map = new Map({
-        basemap: "gray"
-      });
-
-      var view = new SceneView({
-        map: map,
-        container: "viewDiv",
-        zoom: 13,
-        center: [-92.1, 46.795]
-      });
-
-      // Create array for route layers
-      routes = [];
-        
-      const fields = [
-         new Field({
-           name: "OBJECTID",
-           alias: "ObjectID",
-           type: "oid"
-         }), new Field({
-           name: "routes_csv_route_long_name",
-           alias: "route_long_name",
-           type: "string"
-         }), new Field ({
-           name: "trips_examples_route_id",
-           alias: "route_id",
-           type: "string"
-         })
-        ];
-        
-      // Add feature layers for routes
-      for (i = 1; i < 37; i++) {
-          urlString = "https://services.arcgis.com/8df8p0NlLFEShl0r/arcgis/rest/services/DTA_Bus_Routes/FeatureServer/" + String(i)
-          routes[i] = new FeatureLayer({
-              url: urlString,
-              fields: fields,
-              outFields: ["*"]
-          });
-          
-          // Create template for route popups
-          var popupTemplate = {
-              title: "DTA Bus Route",
-              content: "Route Number: {trips_examples_route_id}"
-          };
-          
-          routes[i].popupTemplate = popupTemplate;
-          
-          // Adds the layer to the map once it loads
-          map.add(routes[i]);
-      }
-
-      function rejection(error) {
-          console.log("Layer failed to load: ", error);
-      }
-    });
-  </script>
 </head>
-
 <body>
-  <div id="viewDiv"></div>
-</body>
+    <div id="map"></div>
 
+    <script>
+        // add map
+        const map = L.map('map', {
+          center: [45.52, -122.667],
+          zoom: 3
+        });
+        // add basemap
+        const esriStreets = L.esri.basemapLayer('Gray').addTo(map);
+
+        // marker icon for POI points
+        var airportIcon = L.icon({
+            iconUrl: 'airport.png',
+            iconSize: [30,30]
+        });
+        
+        // add hosted feature layer
+        const earthquakesLayer = L.esri.featureLayer({url: 'https://services.arcgis.com/8df8p0NlLFEShl0r/arcgis/rest/services/NaturalDisasters_Earthquakes/FeatureServer/0'}).addTo(map);
+
+        // set up popup for earthquakes layer
+        earthquakesLayer.bindPopup(function(evt) {
+            return L.Util.template(
+              '<table>'+
+                '<tr><td>LOCATION:</td><td>{LOCATION}</td></tr>'+
+                '<tr><td>YEAR:</td><td>{YEAR}</td></tr>'+
+                '<tr><td>MAGNITUDE:</td><td>{MAGNITUDE}</td></tr>'+
+              '</table>',
+              evt.feature.properties);
+        });
+    </script>
+</body>
 </html>
