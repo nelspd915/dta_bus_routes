@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+  <title>DTA Bus Routes</title>
+
+  <style>
+    html,
+    body,
+    #viewDiv {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+    }
+  </style>
+
+  <link rel="stylesheet" href="https://js.arcgis.com/4.9/esri/css/main.css">
+
+  <script src="https://js.arcgis.com/4.9/"></script>
+
+  <script>
+    require([
+      "esri/Map",
+      "esri/views/SceneView",
+      "esri/layers/FeatureLayer",
+      "esri/layers/support/Field",
+      "esri/tasks/support/Query",
+      "esri/widgets/Legend",
+      "esri/layers/Layer",
+      "esri/widgets/Search",
+      "esri/widgets/LayerList",
+      "esri/WebMap"
+    ], function(
+      Map, SceneView, FeatureLayer, Field, Query, Legend, Layer, Search, LayerList, WebMap
+    ) {
+
+      // Create new map
+      var map = new WebMap({
+          basemap: "gray",
+          portalItem: {
+              id: "d7af942b54e148d18148b8da7aa9283e"
+          }
+      });
+
+      // Create SceneView to display map
+      var view = new SceneView({
+        map: map,
+        container: "viewDiv",
+        zoom: 13,
+        center: [-92.1, 46.795]
+      });      
+        
+      // Add search widget
+      var searchBar = new Search({
+          view: view
+      });
+
+      // Add the widget to the top-right corner of the view
+      view.ui.add(searchBar, {
+          position: "top-right"
+      });
+        
+      // Create layers list
+      view.when(function() {
+          const layerList = new LayerList({
+              view: view,
+              listItemCreatedFunction: function (event) {
+                  const item = event.item;
+                  if (item.layer.type != "group"){ // don't show legend twice
+                      item.panel = {
+                          content: "legend",
+                          open: true
+                      };
+                  }
+              }
+          });
+          
+          view.ui.add(layerList, "bottom-right");
+      });
+
+      function rejection(error) {
+          console.log("Layer failed to load: ", error);
+      }
+    });
+  </script>
+</head>
+
+<body>
+  <div id="viewDiv"></div>
+</body>
+
+</html>
